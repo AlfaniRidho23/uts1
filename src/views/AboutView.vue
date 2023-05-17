@@ -1,37 +1,114 @@
 <template>
   <div class="about">
+  
+ </div>
     <h1>السلام عليكم ورحمة الله وبركاته</h1>
 
     <h2><img src="../assets/bismillah.png"></h2>
 
-    <h3>Arti Alquran menurut bahasa berasal dari kata kerja qaraa yang berarti: “(dia) telah membaca”.
-      Dari pengertian itu maka Quran berarti “bacaan” atau “sesuatu yang dibaca dengan berulang-ulang”.
-      Makna Quran dari segi bahasa tersebut didasarkan pada firman Allah dalam Alquran surat Al-Qiyamah ayat 16-18:
+  <section class="search">
+    <input
+        type="number"
+        v-model="inputnomor"
+        class="input"
+        placeholder="Masukkan nomor surah"
+    />
+    <button @click="lihat" class="btn">Cari</button>
+  </section>
+  <section class="surah">
+    <div class="judull">
+      <h1 v-if="namaSurah" class="judul">{{ namaSurah.name_simple }}</h1>
+    </div>
 
-      “Janganlah kamu gerakkan lidahmu untuk membaca Alquran karena hendak cepat-cepat (menguasai)nya.
-      Sesungguhnya atas tanggungan Kami-lah mengumpulkannya (di dadamu) dan (membuatmu pandai) membacanya.
-      Apabila Kami telah selesai membacakannya maka ikutilah bacaannya itu”.</h3>
+    <div class="suara">
+      <p v-if="audio">
+        <audio controls class="suaraa">
+          <source :src="audio.audio_url" type="audio/mpeg" />
+          Your browser does not support the audio element.
+        </audio>
+      </p>
+      </div>
 
-    <h4>Qur’an  diartikan  sebagai “bacaan”, yakni kalam Allah yang dibaca dengan berulang-ulang.
-        Adapun definisi Alquran secara istilah, Muhammad ‘Ali ash-Shabuni menulisnya sebagai berikut:
-      “Alquran adalah kalam Allah yang tiada tandingannya, diturunkan kepada Nabi Muhammad SAW penutup para Nabi dan Rasul,
-       dengan perantara Malaikat Jibril ‘alaihissalam dan ditulis pada mushaf-mushaf yang kemudian disampaikan kepada kita secara mutawatir,
-       serta membaca dan mempelajarinya merupakan suatu ibadah, yang dimulai dengan surat Al-Fatihah dan ditutup dengan surat An-Nas”.
-       Alquran sebagai sesuatu yang tiada tandingannya, dapat ditemukan dalam surat Al-Isra’ ayat 88:
-      “Katakanlah: ‘Sesungguhnya jika manusia dan jin berkumpul untuk berbuat yang serupa Alquran ini niscaya mereka tidak akan dapat membuat yang serupa dengan dia,
-       sekalipun sebagian mereka menjadi pembantu bagi sebagian yang lain.’”
-       Alquran sebagai wahyu yang diturunkan oleh Allah ke dalam hati nabi Muhammad SAW melalui Malaikat Jibril,
-       dapat ditemukan dalam surat Asy-Syu’ara ayat 192-194:
-       “Dan sesungguhnya Alquran ini benar-benar diturunkan oleh Tuhan semesta alam.
-       Dia dibawa turun oleh Ar-Ruh Al-Amin (Jibril) ke dalam hatimu (Muhammad) agar kau menjadi salah seorang di antara orang-orang yang memberi peringatan”.
-       Jaminan balasan dari Allah bagi orang-orang yang membaca dan mempelajari Qur’an,
-       disebutkan dalam surat Al-Isra’ ayat 45 sebagai berikut:
-      “Dan apabila kamu membaca Alquran niscaya kami adakan antara kamu dan orang-orang yang tidak beriman kepada kehidupan akhirat,
-       suatu dinding yang tertutup”
-       Pemberlakuan nama “Qur’an” bagi keseluruhan kandungan mushaf Qur’an didasarkan kepada firman Allah dalam surat Al-Isra’ ayat 9 sebagai berikut:
-      “Sesungguhnya Alquran ini memberikan petunjuk kepada (jalan) yang lebih lurus dan memberi kabar gembira kepada orang-orang Mu’min yang mengerjakan amal shaleh bahwa bagi mereka ada pahala yang besar”.</h4>
-  </div>
+  </section>
+  <section class="hasil">
+    <div class="hasill">
+      <ul class="lista">
+        <li class="ayat" v-for=" (ayat) in ayah ">
+          {{ayat.text_uthmani}} {{ayat.text}}
+        </li>
+      </ul>
+    </div>
+  </section>
+  
 </template>
+<script>
+import axios from "axios";
+import {ref} from "vue";
+
+export default {
+  data() {
+    return {
+      ayah: [ref],
+      audio: null,
+      namaSurah: null,
+      inputnomor: "",
+    };
+  },
+
+  methods: {
+    async lihat() {
+      let nomor = this.inputnomor;
+      let ayat = `https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${nomor}`;
+      let arti = "https://api.quran.com/api/v4/quran/translations/33?chapter_number=" +
+          nomor;
+
+      let judul = "https://api.quran.com/api/v4/chapters?language=en";
+      let suara =
+          "https://api.quran.com/api/v4/chapter_recitations/2?language=en";
+
+      if (nomor <= 0 || nomor > 114) {
+        alert("masukkan nomor dengan benar");
+      } else {
+        const reqAyat = axios.get(ayat);
+        const reqArti = axios.get(arti);
+        const reqJudul = axios.get(judul);
+        const reqSuara = axios.get(suara);
+
+        axios.all([reqAyat, reqArti, reqJudul, reqSuara]).then(
+            axios.spread((...response) => {
+              const responseAyat = response[0];
+              const responseArti = response[1];
+              const responseJudul = response[2];
+              const responseSuara = response[3];
+
+              const a = responseAyat.data.verses;
+              const b = responseArti.data.translations;
+
+              const gabung = (a, b) => {
+                const res = [];
+
+                for (let i = 0; i < a.length + b.length; i++) {
+                  if (i % 2 === 0) {
+                    res.push(a[i / 2]);
+                  } else {
+                    res.push(b[(i - 1) / 2]);
+                  }
+                }
+                return res;
+              };
+
+              this.ayah= gabung(a, b);
+              this.audio =
+                  responseSuara.data.audio_files[nomor - 1];
+              this.namaSurah =
+                  responseJudul.data.chapters[nomor - 1];
+            })
+        );
+      }
+    },
+  },
+};
+</script>
 
 <style>
 
