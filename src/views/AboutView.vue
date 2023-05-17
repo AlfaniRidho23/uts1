@@ -2,10 +2,9 @@
   <div class="about">
   
  </div>
-    <h1>السلام عليكم ورحمة الله وبركاته</h1>
-
+ <body>
     <h2><img src="../assets/bismillah.png"></h2>
-
+</body>
   <section class="search">
     <input
         type="number"
